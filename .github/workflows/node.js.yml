@@ -33,7 +33,8 @@ jobs:
 
       - name: Build Electron App
         env:
-            GH_TOKEN: ${{ secrets.GH_TOKEN }} 
+            GH_TOKEN: ${{ secrets.GH_TOKEN }}
+            DEBUG: electron-builder
         run: bun run electron:build:win
 
       - name: Upload Artifacts
