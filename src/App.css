@@ -8,6 +8,8 @@ html, body {
   overflow: hidden;
   background-color: transparent;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
@@ -18,21 +20,93 @@ html, body {
   align-items: center;
 }
 
-/* Sidebar Tree Customization */
+/* ===== Custom Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.22);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.12) transparent;
+}
+
+/* ===== Sidebar Tree ===== */
 .ant-tree .ant-tree-node-content-wrapper {
-    border-radius: 6px;
-    transition: all 0.2s;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  padding: 2px 4px !important;
 }
 
 .ant-tree .ant-tree-node-content-wrapper:hover {
-    background-color: rgba(0, 0, 0, 0.04) !important;
+  background-color: transparent !important;
 }
 
 .ant-tree .ant-tree-node-content-wrapper.ant-tree-node-selected {
-    background-color: #e6f4ff !important; /* Lighter blue background */
-    font-weight: 600;
+  background-color: transparent !important;
 }
 
-.ant-tree .ant-tree-node-content-wrapper.ant-tree-node-selected .ant-tree-title {
-    color: #1677ff; /* Primary Blue */
+.ant-tree .ant-tree-treenode {
+  padding: 1px 0 !important;
+}
+
+.ant-tree-indent-unit {
+  width: 16px !important;
+}
+
+/* ===== Card Hover Effect ===== */
+.ant-card {
+  border-radius: 12px !important;
+  border: 1px solid #f0f0f0 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.ant-card:hover {
+  border-color: #e8e8e8 !important;
+}
+
+/* ===== Button Consistency ===== */
+.ant-btn {
+  border-radius: 8px !important;
+}
+
+.ant-btn-circle {
+  border-radius: 50% !important;
+}
+
+/* ===== Modal ===== */
+.ant-modal-content {
+  border-radius: 16px !important;
+  overflow: hidden;
+}
+
+/* ===== Empty State Customization ===== */
+.ant-empty-description {
+  color: #9ca3af;
+  font-size: 14px;
+}
+
+/* ===== Dropdown Menu ===== */
+.ant-dropdown-menu {
+  border-radius: 10px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  padding: 4px !important;
+}
+
+.ant-dropdown-menu-item {
+  border-radius: 6px !important;
 }

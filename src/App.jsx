@@ -439,7 +439,7 @@ function App() {
   }
 
   return (
-    <Layout className="h-screen overflow-hidden rounded-xl bg-transparent shadow-2xl border border-gray-200/50">
+    <Layout className="h-screen overflow-hidden rounded-2xl bg-transparent shadow-xl border border-gray-200/40">
       {contextHolder}
       
       <SettingsModal 
@@ -464,8 +464,8 @@ function App() {
         }}
       />
       
-      <Layout className="bg-white">
-        <Header className="!bg-white px-6 border-b border-gray-200 flex items-center justify-between h-[64px]" style={{ WebkitAppRegion: 'drag' }}>
+      <Layout className="bg-white rounded-xl overflow-hidden">
+        <Header className="!bg-white px-5 border-b border-gray-100 flex items-center justify-between h-[56px]" style={{ WebkitAppRegion: 'drag' }}>
           <Title level={3} style={{ margin: 0 }}>
             {currentTitle}
           </Title>
@@ -481,9 +481,19 @@ function App() {
           </div>
         </Header>
         
-        <Content className="p-6 overflow-auto bg-white flex flex-col">
+        <Content className="p-5 overflow-auto bg-white flex flex-col">
           {filteredTodos.length === 0 ? (
-            <Empty description="暂无待办事项" className="mt-12" />
+            <div className="flex-1 flex flex-col items-center justify-center min-h-[300px]">
+              <Empty 
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={
+                  <div className="text-center">
+                    <p className="text-gray-400 text-sm mt-2">暂无待办事项</p>
+                    <p className="text-gray-300 text-xs mt-1">点击右上角按钮添加第一个任务吧</p>
+                  </div>
+                }
+              />
+            </div>
           ) : (
             <List
               dataSource={filteredTodos}

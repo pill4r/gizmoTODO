@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button, Progress, Typography, Space, Tooltip } from 'antd';
-import { PlayCircleOutlined, PauseCircleOutlined, ReloadOutlined, CloseOutlined, SwapOutlined, StopOutlined } from '@ant-design/icons';
+import { PlayCircleOutlined, PauseCircleOutlined, CloseOutlined, SwapOutlined, StopOutlined } from '@ant-design/icons';
 
 const { Title } = Typography;
 
 const PomodoroView = ({ todoItem, onClose, settings, onUpdateFocusTime }) => {
   console.log('PomodoroView rendered with settings:', settings);
-  // Use settings or fallback to defaults
   const focusTime = settings?.pomodoro?.focusTime;
   const breakTime = settings?.pomodoro?.breakTime;
   
@@ -21,7 +20,6 @@ const PomodoroView = ({ todoItem, onClose, settings, onUpdateFocusTime }) => {
   const [mode, setMode] = useState('focus'); // 'focus' or 'break'
   const timerRef = useRef(null);
 
-  // Update timeLeft when settings change (if timer is not running)
   useEffect(() => {
     if (!isActive) {
       setTimeLeft(mode === 'focus' ? focusTimeSeconds : breakTimeSeconds);
@@ -29,7 +27,6 @@ const PomodoroView = ({ todoItem, onClose, settings, onUpdateFocusTime }) => {
   }, [settings, mode, isActive, focusTimeSeconds, breakTimeSeconds]);
 
   useEffect(() => {
-    // Timer logic
     if (isActive && timeLeft > 0) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => prev - 1);
@@ -38,27 +35,18 @@ const PomodoroView = ({ todoItem, onClose, settings, onUpdateFocusTime }) => {
       clearInterval(timerRef.current);
       setIsActive(false);
       
-      // If finished focus mode, update stats
       if (mode === 'focus' && todoItem && onUpdateFocusTime) {
-         // Add the full duration in minutes
          onUpdateFocusTime(todoItem.id, settings?.pomodoro?.focusTime || 25);
-         
-         // Optional: Notification or sound here
          new Notification("专注完成", { body: `你完成了 ${settings?.pomodoro?.focusTime || 25} 分钟的专注！` });
       } else if (mode === 'break') {
          new Notification("休息结束", { body: "休息结束，准备开始新的专注吧！" });
       }
-      
-      // Auto-switch mode logic could go here? 
-      // For now, let's just stop and let user decide.
     }
 
     return () => clearInterval(timerRef.current);
   }, [isActive, timeLeft, mode, todoItem, onUpdateFocusTime, settings, focusTimeSeconds]);
 
-  const startTimer = () => {
-    setIsActive(true);
-  };
+  const startTimer = () => setIsActive(true);
 
   const stopTimer = () => {
     setIsActive(false);
@@ -85,24 +73,31 @@ const PomodoroView = ({ todoItem, onClose, settings, onUpdateFocusTime }) => {
 
   const currentTotalTime = mode === 'focus' ? focusTimeSeconds : breakTimeSeconds;
   const progressPercent = Math.round(
-    (currentTotalTime - timeLeft) / 
-    currentTotalTime * 100
+    (currentTotalTime - timeLeft) / currentTotalTime * 100
   );
+
+  // Gradient colors
+  const strokeColor = mode === 'focus' 
+    ? { '0%': '#ff7875', '100%': '#ff4d4f' }
+    : { '0%': '#95de64', '100%': '#52c41a' };
 
   return (
     <div className="h-full w-full flex items-center justify-center bg-transparent">
-      <div className="relative w-[160px] h-[160px] rounded-full bg-white overflow-hidden group drag-region border-4 border-gray-100" style={{ WebkitAppRegion: 'drag' }}>
+      <div 
+        className="relative w-[180px] h-[180px] rounded-full bg-white/95 backdrop-blur-sm overflow-hidden group border-2 border-gray-100 shadow-lg"
+        style={{ WebkitAppRegion: 'drag' }}
+      >
       
         {/* Traffic Lights - Top Left */}
-        <div className="absolute top-6 left-8 flex gap-1.5 z-20 no-drag opacity-0 group-hover:opacity-100 transition-opacity" style={{ WebkitAppRegion: 'no-drag' }}>
+        <div className="absolute top-4 left-6 flex gap-1.5 z-20 no-drag opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ WebkitAppRegion: 'no-drag' }}>
           <div 
-              className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-600 cursor-pointer shadow-sm flex items-center justify-center group/close"
+              className="w-3 h-3 rounded-full bg-red-400 hover:bg-red-500 cursor-pointer shadow-sm flex items-center justify-center group/close transition-colors"
               onClick={onClose}
           >
               <CloseOutlined className="text-[8px] text-red-900 opacity-0 group-hover/close:opacity-100" />
           </div>
           <div 
-              className="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-600 cursor-pointer shadow-sm flex items-center justify-center group/min"
+              className="w-3 h-3 rounded-full bg-yellow-400 hover:bg-yellow-500 cursor-pointer shadow-sm flex items-center justify-center group/min transition-colors"
               onClick={() => window.api?.windowMinimize?.()}
           >
               <div className="w-2 h-0.5 bg-yellow-900 opacity-0 group-hover/min:opacity-100"></div>
@@ -114,49 +109,87 @@ const PomodoroView = ({ todoItem, onClose, settings, onUpdateFocusTime }) => {
             type="circle" 
             percent={progressPercent} 
             showInfo={false}
-            width={130}
-            strokeColor={mode === 'focus' ? '#ff4d4f' : '#52c41a'}
-            strokeWidth={6}
-            trailColor="#f5f5f5"
+            width={160}
+            strokeLinecap="round"
+            strokeColor={strokeColor}
+            strokeWidth={8}
+            trailColor="#f0f0f0"
           />
           
           <div className="absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center">
+            {/* Mode badge */}
+            <div 
+              className={`
+                px-2 py-0.5 rounded-full text-[9px] font-medium mb-1
+                ${mode === 'focus' ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-500'}
+              `}
+            >
+              {mode === 'focus' ? '专注' : '休息'}
+            </div>
+
             {/* Timer - Click to Start Only */}
             <div 
-              className={`text-2xl font-mono font-bold text-gray-700 select-none no-drag ${!isActive ? 'cursor-pointer hover:scale-105' : ''} transition-transform`}
+              className={`
+                text-3xl font-mono font-bold text-gray-800 select-none no-drag tracking-tight
+                ${!isActive ? 'cursor-pointer hover:scale-105' : ''} transition-transform duration-200
+              `}
               onClick={!isActive ? startTimer : undefined}
-              title={!isActive ? "开始" : ""}
+              title={!isActive ? "点击开始" : ""}
               style={{ WebkitAppRegion: 'no-drag' }}
             >
               {formatTime(timeLeft)}
             </div>
             
-            {/* Controls - Visible on Hover or when paused */}
-            <div className={`flex items-center gap-1 mt-1 transition-opacity duration-300 no-drag ${isActive ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`} style={{ WebkitAppRegion: 'no-drag' }}>
+            {/* Task Name */}
+            <div 
+              className="mt-1 px-3 max-w-[140px] truncate text-center text-[10px] text-gray-400"
+              title={todoItem?.text}
+            >
+              {todoItem?.text || '专注任务'}
+            </div>
+            
+            {/* Controls */}
+            <div 
+              className={`
+                flex items-center gap-2 mt-2 no-drag
+                transition-all duration-300
+                ${isActive ? 'opacity-0 group-hover:opacity-100 translate-y-1' : 'opacity-100 translate-y-0'}
+              `}
+              style={{ WebkitAppRegion: 'no-drag' }}
+            >
               <Tooltip title={isActive ? "放弃" : "开始"}>
-                  <Button 
-                  shape="circle" 
-                  size="small"
-                  icon={isActive ? <StopOutlined /> : <PlayCircleOutlined />} 
+                <button 
                   onClick={isActive ? stopTimer : startTimer}
-                  className={`border-none bg-transparent shadow-none ${isActive ? 'text-red-400 hover:text-red-600' : 'text-gray-400 hover:text-blue-500'}`}
-                  />
+                  className={`
+                    w-7 h-7 rounded-full flex items-center justify-center text-sm
+                    transition-all duration-200 shadow-sm
+                    ${isActive 
+                      ? 'bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-500' 
+                      : 'bg-blue-50 text-blue-500 hover:bg-blue-100 hover:text-blue-600'
+                    }
+                  `}
+                >
+                  {isActive ? <StopOutlined /> : <PlayCircleOutlined />}
+                </button>
               </Tooltip>
               
               <Tooltip title={mode === 'focus' ? "切换到休息" : "切换到专注"}>
-                  <Button 
-                  shape="circle" 
-                  size="small"
-                  icon={<SwapOutlined />} 
+                <button 
                   onClick={switchMode}
-                  className="text-gray-400 hover:text-green-500 border-none bg-transparent shadow-none"
-                  />
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-sm bg-gray-50 text-gray-400 hover:bg-green-50 hover:text-green-500 transition-all duration-200 shadow-sm"
+                >
+                  <SwapOutlined />
+                </button>
               </Tooltip>
-            </div>
-  
-             {/* Task Name - Bottom */}
-             <div className="absolute bottom-4 w-24 truncate text-center text-[10px] text-gray-400 pointer-events-none">
-              {todoItem?.text || '专注任务'}
+
+              <Tooltip title="重置">
+                <button 
+                  onClick={resetTimer}
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-sm bg-gray-50 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all duration-200 shadow-sm"
+                >
+                  <PauseCircleOutlined />
+                </button>
+              </Tooltip>
             </div>
           </div>
         </div>
