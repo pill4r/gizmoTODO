@@ -25,15 +25,13 @@
     "win": {
       "target": [
         "nsis"
-      ],
-      "icon": "public/icon.ico"
+      ]
     },
     "linux": {
       "target": [
         "AppImage",
         "deb"
       ],
-      "icon": "public/icon.ico",
       "category": "Office"
     },
     "mac": {
@@ -41,7 +39,6 @@
         "dmg",
         "zip"
       ],
-      "icon": "public/icon.ico",
       "category": "public.app-category.productivity"
     },
     "nsis": {
