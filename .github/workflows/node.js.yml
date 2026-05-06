@@ -1,6 +1,5 @@
 name: Build Electron App
 
-
 on:
   push:
     branches: [ "master", "main" ]
@@ -28,14 +27,32 @@ jobs:
           bun-version: latest
 
       - name: Install Dependencies
-        # Using npm install because package-lock.json might be missing (project uses bun.lock)
         run: bun install
 
-      - name: Build Electron App
+      - name: Build Vite (Frontend)
+        run: bun run build > vite-build.log 2>&1
+
+      - name: Upload Vite Build Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vite-build-log
+          path: vite-build.log
+          if-no-files-found: ignore
+
+      - name: Build Electron (Packaging)
         env:
-            GH_TOKEN: ${{ secrets.GH_TOKEN }}
-            DEBUG: electron-builder
-        run: bun run electron:build:win
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          DEBUG: electron-builder
+        run: bunx electron-builder --win > electron-builder.log 2>&1
+
+      - name: Upload Electron Builder Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: electron-builder-log
+          path: electron-builder.log
+          if-no-files-found: ignore
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
