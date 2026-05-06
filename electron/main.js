@@ -40,8 +40,10 @@ function createWindow() {
     width: 900,
     height: 600,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false, // 为了简化迁移，先关闭隔离，后续建议开启并使用 preload
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false, // electron-store 需要非沙箱环境
     },
     frame: false, // 完全无边框，自己绘制红绿灯
     transparent: true, // 允许透明背景，实现圆角

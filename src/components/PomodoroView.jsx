@@ -2,20 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button, Progress, Typography, Space, Tooltip } from 'antd';
 import { PlayCircleOutlined, PauseCircleOutlined, ReloadOutlined, CloseOutlined, SwapOutlined, StopOutlined } from '@ant-design/icons';
 
-const getIpcRenderer = () => {
-  if (window.ipcRenderer) return window.ipcRenderer;
-  if (window.require) {
-    try {
-      return window.require('electron').ipcRenderer;
-    } catch (e) {
-      console.error('Electron IPC not available:', e);
-    }
-  }
-  return { send: (channel) => console.log(`IPC send: ${channel}`) };
-};
-
-const ipcRenderer = getIpcRenderer();
-
 const { Title } = Typography;
 
 const PomodoroView = ({ todoItem, onClose, settings, onUpdateFocusTime }) => {
@@ -117,7 +103,7 @@ const PomodoroView = ({ todoItem, onClose, settings, onUpdateFocusTime }) => {
           </div>
           <div 
               className="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-600 cursor-pointer shadow-sm flex items-center justify-center group/min"
-              onClick={() => ipcRenderer.send('window-minimize')}
+              onClick={() => window.api?.windowMinimize?.()}
           >
               <div className="w-2 h-0.5 bg-yellow-900 opacity-0 group-hover/min:opacity-100"></div>
           </div>

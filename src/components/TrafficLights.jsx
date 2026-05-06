@@ -2,24 +2,15 @@ import React from 'react';
 
 const TrafficLights = () => {
   const handleMinimize = () => {
-    if (window.require) {
-      const { ipcRenderer } = window.require('electron');
-      ipcRenderer.send('window-minimize');
-    }
+    window.api?.windowMinimize?.();
   };
 
   const handleMaximize = () => {
-    if (window.require) {
-      const { ipcRenderer } = window.require('electron');
-      ipcRenderer.send('window-maximize');
-    }
+    window.api?.windowMaximize?.();
   };
 
   const handleClose = () => {
-    if (window.require) {
-      const { ipcRenderer } = window.require('electron');
-      ipcRenderer.send('window-close');
-    }
+    window.api?.windowClose?.();
   };
 
   return (

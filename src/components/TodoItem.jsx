@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
 import { Card, Checkbox, Button, Typography, Tag } from 'antd';
-import { DeleteOutlined, CalendarOutlined, PlayCircleOutlined, FieldTimeOutlined } from '@ant-design/icons';
+import { DeleteOutlined, CalendarOutlined, PlayCircleOutlined, FieldTimeOutlined, EditOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { Text } = Typography;
 
-const TodoItem = ({ item, toggleTodoCompletion, handleDeleteTodo, handleStartPomodoro }) => {
+const PRIORITY_MAP = {
+  high: { color: 'red', label: '高' },
+  medium: { color: 'blue', label: '中' },
+  low: { color: 'default', label: '低' },
+};
+
+const TodoItem = ({ item, toggleTodoCompletion, handleDeleteTodo, handleStartPomodoro, onEdit }) => {
   const [isAnimating, setIsAnimating] = useState(false);
 
   const handleToggle = (e) => {
@@ -80,7 +86,7 @@ const TodoItem = ({ item, toggleTodoCompletion, handleDeleteTodo, handleStartPom
         style={getCardStyle(item.deadline, item.completed)}
         onClick={handleToggle}
     >
-        <div className="flex items-center flex-1 gap-4">
+                <div className="flex items-center flex-1 gap-4">
             <Checkbox 
                 checked={item.completed || isAnimating} 
                 onChange={handleToggle}
@@ -88,9 +94,16 @@ const TodoItem = ({ item, toggleTodoCompletion, handleDeleteTodo, handleStartPom
             />
             <div className={`flex flex-col transition-opacity duration-300 ${item.completed ? 'opacity-50' : 'opacity-100'}`}>
                 <div className="relative inline-block w-fit">
-                    <Text strong={!item.completed && !isAnimating} className="text-base">
-                        {item.text}
-                    </Text>
+                    <div className="flex items-center gap-2">
+                        <Text strong={!item.completed && !isAnimating} className="text-base">
+                            {item.text}
+                        </Text>
+                        {item.priority && PRIORITY_MAP[item.priority] && (
+                            <Tag color={PRIORITY_MAP[item.priority].color} size="small">
+                                {PRIORITY_MAP[item.priority].label}
+                            </Tag>
+                        )}
+                    </div>
                     <span 
                         className={`absolute left-0 top-1/2 h-[2px] bg-gray-600 transition-all duration-500 ease-out`}
                         style={{ 
@@ -99,10 +112,22 @@ const TodoItem = ({ item, toggleTodoCompletion, handleDeleteTodo, handleStartPom
                         }}
                     />
                 </div>
+                {item.tags && item.tags.length > 0 && (
+                    <div className="flex items-center gap-1 mt-1">
+                        {item.tags.map(tag => (
+                            <Tag key={tag} size="small" className="text-[10px] m-0">{tag}</Tag>
+                        ))}
+                    </div>
+                )}
                 {item.deadline && (
                     <div className="flex items-center mt-1 text-xs text-gray-500">
                         <CalendarOutlined className="mr-1" />
                         {formatDeadline(item.deadline)}
+                    </div>
+                )}
+                {item.notes && (
+                    <div className="mt-1 text-xs text-gray-400 line-clamp-1">
+                        {item.notes}
                     </div>
                 )}
                 {item.totalFocusTime > 0 && (
@@ -127,6 +152,15 @@ const TodoItem = ({ item, toggleTodoCompletion, handleDeleteTodo, handleStartPom
                     }}
                 />
             )}
+            <Button 
+                type="text"
+                icon={<EditOutlined />}
+                className="text-gray-400 hover:text-blue-500 flex items-center justify-center"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit?.();
+                }}
+            />
             <Button 
                 type="text" 
                 danger 

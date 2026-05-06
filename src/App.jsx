@@ -10,24 +10,8 @@ import AddCategoryModal from './components/AddCategoryModal';
 import RenameCategoryModal from './components/RenameCategoryModal';
 import PomodoroView from './components/PomodoroView';
 import SettingsModal from './components/SettingsModal';
+import EditTodoModal from './components/EditTodoModal';
 import { generateMockData } from './mock/data';
-
-// Helper for IPC
-const getIpcRenderer = () => {
-    if (window.ipcRenderer) return window.ipcRenderer;
-    if (window.require) {
-      try {
-        return window.require('electron').ipcRenderer;
-      } catch (e) {
-        console.error('Electron IPC not available:', e);
-      }
-    }
-    return { 
-        send: (channel) => console.log(`IPC send: ${channel}`),
-        invoke: (channel) => { console.log(`IPC invoke: ${channel}`); return Promise.resolve(null); }
-    };
-};
-const ipcRenderer = getIpcRenderer();
 
 const { Header, Content } = Layout;
 const { Title } = Typography;
@@ -78,6 +62,7 @@ function App() {
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [renamingCategory, setRenamingCategory] = useState(null);
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [editingTodo, setEditingTodo] = useState(null);
   
   // Default settings
   const [settings, setSettings] = useState({
@@ -93,10 +78,10 @@ function App() {
     const loadData = async () => {
         try {
             // Load from Electron Store via IPC
-            let savedPanelState = await ipcRenderer.invoke('store-get', 'categoryPanelCollapsed');
-            let savedSettings = await ipcRenderer.invoke('store-get', 'appSettings');
-            let savedCategories = await ipcRenderer.invoke('store-get', 'categories');
-            let savedTodos = await ipcRenderer.invoke('store-get', 'todos');
+            let savedPanelState = await window.api.storeGet('categoryPanelCollapsed');
+            let savedSettings = await window.api.storeGet('appSettings');
+            let savedCategories = await window.api.storeGet('categories');
+            let savedTodos = await window.api.storeGet('todos');
 
             // MIGRATION: Check LocalStorage if Store is empty
             if (!savedCategories && !savedTodos) {
@@ -107,23 +92,23 @@ function App() {
                     console.log('Migrating from LocalStorage to Electron Store...');
                     if (lsCategories) {
                         savedCategories = JSON.parse(lsCategories);
-                        ipcRenderer.send('store-set', 'categories', savedCategories);
+                        window.api.storeSet('categories', savedCategories);
                     }
                     if (lsTodos) {
                         savedTodos = JSON.parse(lsTodos);
-                        ipcRenderer.send('store-set', 'todos', savedTodos);
+                        window.api.storeSet('todos', savedTodos);
                     }
                     
                     const lsSettings = localStorage.getItem('appSettings');
                     if (lsSettings) {
                         savedSettings = JSON.parse(lsSettings);
-                        ipcRenderer.send('store-set', 'appSettings', savedSettings);
+                        window.api.storeSet('appSettings', savedSettings);
                     }
                     
                     const lsPanel = localStorage.getItem('categoryPanelCollapsed');
                     if (lsPanel) {
                         savedPanelState = lsPanel === 'true';
-                        ipcRenderer.send('store-set', 'categoryPanelCollapsed', savedPanelState);
+                        window.api.storeSet('categoryPanelCollapsed', savedPanelState);
                     }
                 }
             }
@@ -158,8 +143,8 @@ function App() {
                     setTodoItems([]);
                     
                     // Persist immediately
-                    ipcRenderer.send('store-set', 'categories', initialCategories);
-                    ipcRenderer.send('store-set', 'todos', []);
+                    window.api.storeSet('categories', initialCategories);
+                    window.api.storeSet('todos', []);
                 } else {
                     setCategories(savedCategories);
                     setTodoItems(savedTodos.map(item => ({
@@ -183,8 +168,8 @@ function App() {
                  setTodoItems(initialTodos);
                  
                  // Persist immediately so next load finds them
-                 ipcRenderer.send('store-set', 'categories', initialCategories);
-                 ipcRenderer.send('store-set', 'todos', initialTodos);
+                 window.api.storeSet('categories', initialCategories);
+                 window.api.storeSet('todos', initialTodos);
             }
 
         } catch (e) {
@@ -203,17 +188,17 @@ function App() {
 
   useEffect(() => {
     if (!isDataLoaded) return;
-    ipcRenderer.send('store-set', 'categoryPanelCollapsed', collapsed);
+    window.api.storeSet('categoryPanelCollapsed', collapsed);
   }, [collapsed, isDataLoaded]);
 
   useEffect(() => {
     if (!isDataLoaded) return;
-    ipcRenderer.send('store-set', 'categories', categories);
+    window.api.storeSet('categories', categories);
   }, [categories, isDataLoaded]);
 
   useEffect(() => {
     if (!isDataLoaded) return;
-    ipcRenderer.send('store-set', 'todos', todoItems.map(item => ({
+    window.api.storeSet('todos', todoItems.map(item => ({
       ...item,
       deadline: item.deadline ? item.deadline.toISOString() : null
     })));
@@ -238,7 +223,11 @@ function App() {
       deadline: newTodoDeadline ? newTodoDeadline.toDate() : null,
       completed: false,
       id: Date.now(),
-      categoryId: categoryId
+      categoryId: categoryId,
+      priority: 'medium',
+      notes: '',
+      tags: [],
+      createdAt: new Date().toISOString(),
     };
 
     setTodoItems([...todoItems, newTodo]);
@@ -378,10 +367,18 @@ function App() {
                 ...(newSettings.pomodoro || {})
             }
         };
-        ipcRenderer.send('store-set', 'appSettings', mergedSettings);
+        window.api.storeSet('appSettings', mergedSettings);
         return mergedSettings;
     });
     messageApi.success('设置已保存');
+  };
+
+  // Edit todo
+  const handleEditTodo = (id, updates) => {
+    setTodoItems(todoItems.map(item =>
+      item.id === id ? { ...item, ...updates } : item
+    ));
+    messageApi.success('修改成功');
   };
 
   // Update todo focus time
@@ -401,13 +398,13 @@ function App() {
   const handleStartPomodoro = (item) => {
     setActivePomodoroItem(item);
     setIsMiniMode(true);
-    ipcRenderer.send('enter-mini-mode');
+    window.api.enterMiniMode();
   };
   
   const handleClosePomodoro = () => {
       setIsMiniMode(false);
       setActivePomodoroItem(null);
-      ipcRenderer.send('leave-mini-mode');
+      window.api.leaveMiniMode();
   };
 
   // Get current category title
@@ -497,6 +494,7 @@ function App() {
                         toggleTodoCompletion={toggleTodoCompletion} 
                         handleDeleteTodo={handleDeleteTodo} 
                         handleStartPomodoro={handleStartPomodoro}
+                        onEdit={() => setEditingTodo(item)}
                     />
                 </List.Item>
               )}
@@ -504,6 +502,14 @@ function App() {
           )}
         </Content>
       </Layout>
+
+      <EditTodoModal
+        open={!!editingTodo}
+        onClose={() => setEditingTodo(null)}
+        todo={editingTodo}
+        onSave={handleEditTodo}
+        categories={categories}
+      />
 
       <AddTodoModal 
         isTodoModalOpen={isTodoModalOpen}
