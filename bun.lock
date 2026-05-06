@@ -5,6 +5,7 @@
     "": {
       "name": "promodoro-todo",
       "dependencies": {
+        "dayjs": "^1.11.13",
         "electron-store": "^11.0.2",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",

@@ -29,30 +29,10 @@ jobs:
       - name: Install Dependencies
         run: bun install
 
-      - name: Build Vite (Frontend)
-        run: bun run build > vite-build.log 2>&1
-
-      - name: Upload Vite Build Log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: vite-build-log
-          path: vite-build.log
-          if-no-files-found: ignore
-
-      - name: Build Electron (Packaging)
+      - name: Build Electron App
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          DEBUG: electron-builder
-        run: bunx electron-builder --win > electron-builder.log 2>&1
-
-      - name: Upload Electron Builder Log
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: electron-builder-log
-          path: electron-builder.log
-          if-no-files-found: ignore
+        run: bun run electron:build:win -- --publish=never
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
