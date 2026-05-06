@@ -1,0 +1,91 @@
+name: Build Electron App
+
+on:
+  push:
+    branches: ["master", "main"]
+    tags:
+      - "v*"
+  pull_request:
+    branches: ["master", "main"]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            name: Windows
+            artifact: promodoro-todo-win
+            path: release/*.exe
+          - os: ubuntu-latest
+            name: Linux
+            artifact: promodoro-todo-linux
+            path: "release/*.{AppImage,deb}"
+          - os: macos-latest
+            name: macOS
+            artifact: promodoro-todo-mac
+            path: "release/*.{dmg,zip}"
+
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Dependencies
+        run: bun install
+
+      - name: Build Electron App
+        run: bun run build && bunx electron-builder --publish=never
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.path }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref_type == 'tag'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: promodoro-todo-win
+          path: artifacts
+
+      - name: Download Linux Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: promodoro-todo-linux
+          path: artifacts
+
+      - name: Download macOS Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: promodoro-todo-mac
+          path: artifacts
+
+      - name: List Artifacts
+        run: ls -la artifacts/
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          token: ${{ secrets.GH_TOKEN }}
