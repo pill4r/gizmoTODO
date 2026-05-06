@@ -21,11 +21,15 @@ jobs:
           - os: ubuntu-latest
             name: Linux
             artifact: promodoro-todo-linux
-            path: "release/*.{AppImage,deb}"
+            path: |
+              release/*.AppImage
+              release/*.deb
           - os: macos-latest
             name: macOS
             artifact: promodoro-todo-mac
-            path: "release/*.{dmg,zip}"
+            path: |
+              release/*.dmg
+              release/*.zip
 
     name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.os }}

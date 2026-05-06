@@ -2,6 +2,7 @@
   "name": "promodoro-todo",
   "private": true,
   "version": "0.0.0",
+  "author": "Promodoro <promodoro@example.com>",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
